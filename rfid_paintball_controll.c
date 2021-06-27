@@ -3,11 +3,14 @@
  
 #define SS_PIN 10
 #define RST_PIN 9
-MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance for RFID reader
 
-const int led = 3;           // the PWM pin the LED is attached to
-int brightness = 0;    // how bright the LED is
-int fadeAmount = 2;    // how many points to fade the LED by
+const int ledGreen = 6; // the PWM pin the LED Green is attached to
+const int ledRed = 7; // the pin the LED Red is attached to
+const int ledBlue = 4; // the pin the LED Blue is attached to
+const int led = 3;      // the PWM pin the LED is attached to
+int brightness = 0;     // how bright the LED is, both LEDs on pin 3 and pin 6
+int fadeAmount = 2;     // how many points to fade the LED by
 const int addBrightnessAmount = 50;
 int brightnessAmount;
 
@@ -20,6 +23,10 @@ String tagBase[5];
 void setup() 
 {
     pinMode(led, OUTPUT);
+    pinMode(ledGreen, OUTPUT);
+    pinMode(ledRed, OUTPUT);
+    pinMode(ledBlue, OUTPUT);
+    
     Serial.begin(9600);   // Initiate a serial communication
     SPI.begin();      // Initiate  SPI bus
     mfrc522.PCD_Init();   // Initiate MFRC522
@@ -63,6 +70,7 @@ void loop()
         {
             Serial.println("Authorized access");
             Serial.println();
+            digitalWrite(ledBlue, HIGH);
             accessGrantedLed();
             totalTaggedAmount += tagPointAmount;
 
@@ -74,6 +82,7 @@ void loop()
             }
             //Serial.println(totalTaggedAmount);
             delay(3000);
+            digitalWrite(ledBlue, LOW);
         }
         else {
             Serial.println(" Access denied");
@@ -87,10 +96,12 @@ void loop()
 void accessDeniedLed() 
 {
     analogWrite(led, 255);
+    digitalWrite(ledRed, HIGH);
     totalTaggedAmount = 0;
     brightnessAmount = 0;
     delay(500);
     analogWrite(led, 0);
+    digitalWrite(ledRed, LOW);
 }
 
 void accessGrantedLed() 
@@ -103,6 +114,7 @@ void accessGrantedLed()
 void fadeEffect() 
 {
     analogWrite(led, brightness);
+    analogWrite(ledGreen, brightness);
     brightness = brightness + fadeAmount;
     if (brightness <= 1 || brightness >= 254) {
       fadeAmount = -fadeAmount;
