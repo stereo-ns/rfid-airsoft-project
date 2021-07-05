@@ -1,23 +1,28 @@
+//Libraries needed for project, for connecting and making RFID-RC522 module work
 #include <SPI.h>
 #include <MFRC522.h>
  
 #define SS_PIN 10
 #define RST_PIN 9
+
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance for RFID reader
 
 const int ledGreen = 6; // the PWM pin the LED Green is attached to
 const int ledRed = 7; // the pin the LED Red is attached to
 const int ledBlue = 4; // the pin the LED Blue is attached to
 const int led = 3;      // the PWM pin the LED is attached to
+const int button = 2; // button pin
+const int ledButton = 13; // control LED for button (HIGH and LOW)
 int brightness = 0;     // how bright the LED is, both LEDs on pin 3 and pin 6
 int fadeAmount = 2;     // how many points to fade the LED by
-const int addBrightnessAmount = 50;
-int brightnessAmount;
+const int addBrightnessAmount = 50; // used when known player is tagged
+int brightnessAmount; // initial amount for LED, is OFF at beginning
 
-bool gameOver = false;
-int totalTaggedAmount;
-const int tagPointAmount = 1;
-String tagBase[5];
+bool gameOver = false; // when all friendly players are tagged this will be TRUE
+int totalTaggedAmount; // amount of friendly players tagged
+const int tagPointAmount = 1; // to be considered for diferent type of calculating points for win
+
+// needs to be implemented later, base check for comparing friendly tags
 
 
 void setup() 
@@ -26,6 +31,9 @@ void setup()
     pinMode(ledGreen, OUTPUT);
     pinMode(ledRed, OUTPUT);
     pinMode(ledBlue, OUTPUT);
+
+    pinMode(ledButton, OUTPUT);
+    pinMode(button, INPUT);
     
     Serial.begin(9600);   // Initiate a serial communication
     SPI.begin();      // Initiate  SPI bus
@@ -36,6 +44,16 @@ void setup()
 
 void loop() 
 {
+    if (digitalRead(button) == LOW) {
+      //digitalWrite(ledButton, HIGH);
+      if (gameOver == true)
+      {
+        fadeEffect();
+      }
+    } else {
+      //digitalWrite(ledButton, LOW);
+      resetAll();    
+    }
     while (gameOver == false)
     {
         // Look for new cards
@@ -90,7 +108,6 @@ void loop()
             delay(3000);
         }
     }
-    fadeEffect();
 }
 
 void accessDeniedLed() 
@@ -99,7 +116,7 @@ void accessDeniedLed()
     digitalWrite(ledRed, HIGH);
     totalTaggedAmount = 0;
     brightnessAmount = 0;
-    delay(500);
+    delay(3000);
     analogWrite(led, 0);
     digitalWrite(ledRed, LOW);
 }
@@ -107,7 +124,6 @@ void accessDeniedLed()
 void accessGrantedLed() 
 {
     brightnessAmount = brightnessAmount + addBrightnessAmount;
-    //Serial.println(brightnessAmount);
     analogWrite(led, brightnessAmount);
 }
 
@@ -120,4 +136,16 @@ void fadeEffect()
       fadeAmount = -fadeAmount;
     }
     delay(30);
+}
+
+void resetAll()
+{
+  totalTaggedAmount = 0;
+  brightnessAmount = 0;
+  brightness = 0;
+  analogWrite(led, brightness);
+  analogWrite(ledGreen, brightness);
+  gameOver = false;
+  Serial.println("RESET");
+  delay(3000);
 }
